@@ -1,6 +1,6 @@
-# UB SummarAIzer
+# UB Research Assistant
 
-**UB SummarAIzer** is an AI-powered research assistant designed for the University at Buffalo community. It helps students and faculty discover, summarize, and explore relevant academic research using generative AI.
+**UB Research Assistant** is an AI-powered research assistant designed for the University at Buffalo community. It helps students and faculty discover, summarize, and explore relevant academic research using generative AI.
 
 ## 🚀 Features
 - 🔍 Summarize research papers from Semantic Scholar and arXiv
