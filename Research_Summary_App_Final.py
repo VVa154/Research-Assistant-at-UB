@@ -6,10 +6,11 @@ import json
 from datetime import datetime
 import pandas as pd
 import os
+import openai
 
 # ---------------------- CONFIG ----------------------
 OLLAMA_MODEL = "mistral"
-OLLAMA_URL = "http://localhost:11434/api/generate"
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 S2_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 ARXIV_URL = "http://export.arxiv.org/api/query"
 
@@ -157,15 +158,23 @@ def load_ub_papers():
     with open("ub_papers.json", "r") as f:
         return json.load(f)
 
-# ---------------------- OLLAMA SUMMARIZATION ----------------------
-def summarize_text(text):
-    prompt = f"Summarize the following research abstract in 2 simple sentences:\n\n{text}"
-    response = requests.post(OLLAMA_URL, json={
-        "model": OLLAMA_MODEL,
-        "prompt": prompt,
-        "stream": False
-    })
-    return response.json().get("response", "(No summary returned)").strip()
+# ---------------------- SUMMARIZATION ----------------------
+def get_relevance_reason(paper, keyword):
+    prompt = (
+        f"Given the following research paper and a keyword, explain in 1 line why the paper is relevant "
+        f"to that keyword.\n\n"
+        f"Keyword: {keyword}\n\n"
+        f"Title: {paper['title']}\n"
+        f"Abstract: {paper['abstract']}\n\n"
+        f"Respond with a single sentence only."
+    )
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=60
+    )
+    return response.choices[0].message.content.strip()
 
 # ---------------------- OLLAMA RELEVANCE EXPLANATION ----------------------
 def get_relevance_reason(paper, keyword):
