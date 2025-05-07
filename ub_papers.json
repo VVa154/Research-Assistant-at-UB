@@ -1,0 +1,32 @@
+[
+  {
+    "id": "ub_001",
+    "title": "Optimizing AI Models for Educational Outcomes",
+    "authors": ["Dr. Emily Chen", "Dr. Anirudh Rao"],
+    "abstract": "This study explores optimization techniques for transformer-based models to improve learning analytics in online education platforms.",
+    "department": "Computer Science and Engineering",
+    "email": "emilychen@buffalo.edu",
+    "year": "2023",
+    "link": "https://research.buffalo.edu/papers/ai-education"
+  },
+  {
+    "id": "ub_002",
+    "title": "Blockchain for Public Health Records",
+    "authors": ["Dr. Vaishnavi Varanasi"],
+    "abstract": "This paper proposes a blockchain-based solution to enhance the security and accessibility of electronic health records for underserved populations.",
+    "department": "Health Informatics",
+    "email": "vvaranasi@buffalo.edu",
+    "year": "2022",
+    "link": "https://research.buffalo.edu/papers/blockchain-health"
+  },
+  {
+    "id": "ub_003",
+    "title": "Climate Modeling Using Generative AI",
+    "authors": ["Dr. Elliot Whittaker"],
+    "abstract": "We demonstrate the use of generative AI in simulating regional climate projections and its implications for policy and urban planning.",
+    "department": "Geography and Environmental Studies",
+    "email": "ewhit@buffalo.edu",
+    "year": "2024",
+    "link": "https://research.buffalo.edu/papers/ai-climate"
+  }
+]
