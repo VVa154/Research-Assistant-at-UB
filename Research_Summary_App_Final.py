@@ -1,4 +1,3 @@
-
 import streamlit as st
 import requests
 import xml.etree.ElementTree as ET
@@ -9,8 +8,7 @@ import os
 import openai
 
 # ---------------------- CONFIG ----------------------
-OLLAMA_MODEL = "mistral"
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+openai.api_key = os.getenv("OPENAI_API_KEY")
 S2_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 ARXIV_URL = "http://export.arxiv.org/api/query"
 
@@ -46,10 +44,6 @@ st.markdown("""
         font-size: 1.05rem;
         font-weight: 500;
         padding: 10px 16px;
-    }
-    .stTextInput > div > input {
-        font-size: 1rem;
-        padding: 0.6rem;
     }
     .paper-container {
         background-color: #f6faff;
@@ -152,51 +146,34 @@ with st.sidebar:
             updated.to_csv(file_path, index=False)
             st.success("✅ Thank you! Your feedback has been saved.")
 
-# ---------------------- LOAD UB PAPERS ----------------------
+# ---------------------- UTILS ----------------------
 @st.cache_data
 def load_ub_papers():
     with open("ub_papers.json", "r") as f:
         return json.load(f)
 
-# ---------------------- SUMMARIZATION ----------------------
-def get_relevance_reason(paper, keyword):
-    prompt = (
-        f"Given the following research paper and a keyword, explain in 1 line why the paper is relevant "
-        f"to that keyword.\n\n"
-        f"Keyword: {keyword}\n\n"
-        f"Title: {paper['title']}\n"
-        f"Abstract: {paper['abstract']}\n\n"
-        f"Respond with a single sentence only."
-    )
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-        max_tokens=60
-    )
-    return response.choices[0].message.content.strip()
-
-# ---------------------- OLLAMA RELEVANCE EXPLANATION ----------------------
-def get_relevance_reason(paper, keyword):
-    prompt = (
-        f"Given the following research paper and a keyword, explain in 1 line why the paper is relevant "
-        f"to that keyword.\n\n"
-        f"Keyword: {keyword}\n\n"
-        f"Title: {paper['title']}\n"
-        f"Abstract: {paper['abstract']}\n\n"
-        f"Respond with a single sentence only."
-    )
+def summarize_text(text):
     try:
-        response = requests.post(OLLAMA_URL, json={
-            "model": OLLAMA_MODEL,
-            "prompt": prompt,
-            "stream": False
-        })
-        return response.json().get("response", "(No response)").strip()
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": f"Summarize the following research abstract in 2 simple sentences:\n\n{text}"}],
+            temperature=0.5
+        )
+        return response.choices[0].message["content"].strip()
     except Exception as e:
-        return f"(Ollama error: {str(e)})"
+        return f"(Error: {str(e)})"
 
-# ---------------------- SEMANTIC SCHOLAR FETCH ----------------------
+def get_relevance_reason(paper, keyword):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": f"Given this paper and the keyword '{keyword}', explain in one line why it is relevant.\n\nTitle: {paper['title']}\nAbstract: {paper['abstract']}"}],
+            temperature=0.3
+        )
+        return response.choices[0].message["content"].strip()
+    except Exception as e:
+        return f"(Error: {str(e)})"
+
 def fetch_semantic_scholar(query):
     res = requests.get(S2_URL, params={
         "query": query,
@@ -213,7 +190,6 @@ def fetch_semantic_scholar(query):
         } for p in res.json().get("data", []) if p.get("abstract")
     ]
 
-# ---------------------- ARXIV FETCH ----------------------
 def fetch_arxiv(query):
     url = f"{ARXIV_URL}?search_query=all:{query}&start=0&max_results=3"
     res = requests.get(url)
@@ -236,7 +212,6 @@ def fetch_arxiv(query):
 # ---------------------- MAIN TABS ----------------------
 summary_tab, ub_tab, collab_tab = st.tabs(["Summary", "UB Database", "Collaboration Finder"])
 
-# ---------- TAB 1: Summary ----------
 with summary_tab:
     st.markdown("### Research Summarizer")
     topic = st.text_input("Enter a keyword to fetch and summarize papers")
@@ -262,11 +237,8 @@ with summary_tab:
                 </div>
             """, unsafe_allow_html=True)
 
-# ---------- TAB 2: UB Paper Database ----------
 with ub_tab:
     st.markdown("### UB Research Paper Archive")
-    st.markdown("Search and view relevant UB faculty research papers.")
-
     keyword = st.text_input("Enter a research keyword", key="ub_search")
 
     if keyword:
@@ -281,11 +253,10 @@ with ub_tab:
                     filtered.append(paper)
 
         if filtered:
-            st.markdown(f"**{len(filtered)} relevant papers found:**")
             for paper in filtered:
                 st.markdown(f"""
                     <div class="paper-container">
-                        <div class="paper-title">{paper["title"]}</div>
+                        <div class="paper-title">{paper['title']}</div>
                         <div class="paper-meta">
                             Authors: {', '.join(paper['authors'])}<br>
                             Department: {paper['department']}<br>
@@ -299,27 +270,20 @@ with ub_tab:
                 """, unsafe_allow_html=True)
         else:
             st.warning("No matching papers found.")
-    else:
-        st.info("Enter a keyword above to begin searching.")
 
-# ---------- TAB 3: Collaboration Finder ----------
 with collab_tab:
     st.markdown("### UB Professor Collaboration Finder")
-    st.markdown("Search for UB professors doing similar research.")
-
     keyword = st.text_input("Enter a research keyword", key="collab_input")
 
     if keyword:
-        st.session_state["last_keyword"] = keyword
         ub_papers = load_ub_papers()
         results = [p for p in ub_papers if keyword.lower() in p["title"].lower() or keyword.lower() in p["abstract"].lower()]
         if results:
-            st.markdown(f"**{len(results)} matches found:**")
             for paper in results:
                 explanation = get_relevance_reason(paper, keyword)
                 st.markdown(f"""
                     <div class="paper-container">
-                        <div class="paper-title">{paper["title"]}</div>
+                        <div class="paper-title">{paper['title']}</div>
                         <div class="paper-meta">
                             Authors: {', '.join(paper['authors'])}<br>
                             Department: {paper['department']}<br>
@@ -331,5 +295,3 @@ with collab_tab:
                 """, unsafe_allow_html=True)
         else:
             st.warning("No matching faculty found.")
-    else:
-        st.info("Enter a keyword to begin matching.")
