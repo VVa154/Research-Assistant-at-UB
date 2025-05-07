@@ -155,18 +155,14 @@ def load_ub_papers():
 import openai
 
 def summarize_text(text):
-    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a helpful research assistant that summarizes academic papers."},
-            {"role": "user", "content": f"Summarize the following research abstract in 2 simple sentences:\n\n{text}"}
-        ],
-        temperature=0.5,
-        max_tokens=150
+            {"role": "system", "content": "Summarize the following abstract in 2 simple sentences."},
+            {"role": "user", "content": text}
+        ]
     )
-    return response.choices[0].message.content.strip()
+    return response.choices[0].message["content"].strip()
 
 
 def get_relevance_reason(paper, keyword):
