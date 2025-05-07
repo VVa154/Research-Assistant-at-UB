@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 import pandas as pd
 import os
-import openai
+from openai import OpenAI
 
 # ---------------------- CONFIG ----------------------
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"]) 
