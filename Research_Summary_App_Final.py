@@ -8,7 +8,7 @@ import os
 import openai
 
 # ---------------------- CONFIG ----------------------
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"]) 
 S2_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 ARXIV_URL = "http://export.arxiv.org/api/query"
 
@@ -155,15 +155,17 @@ def load_ub_papers():
 import openai
 
 def summarize_text(text):
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Summarize the following abstract in 2 simple sentences."},
-            {"role": "user", "content": text}
-        ]
-    )
-    return response.choices[0].message["content"].strip()
+    prompt = f"Summarize the following abstract in 2 sentences:\n\n{text}"
 
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",  # or "gpt-4" if your key allows
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7
+    )
+    return response.choices[0].message.content.strip()
 
 def get_relevance_reason(paper, keyword):
     try:
